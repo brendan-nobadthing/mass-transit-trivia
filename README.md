@@ -17,6 +17,7 @@ A current working docker implementation is required for these.
 dotnet test
 ```
 
+
 # aws deployment
 
  
