@@ -7,9 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MttApplication", "MttApplic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MttTests", "MttTests\MttTests.csproj", "{B979F078-7FF9-4724-AAAD-7C7322C0DB75}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MttPersistence", "MttPersistence\MttPersistence.csproj", "{12CB9BE1-5B44-496C-95C4-9D5EB5E6AF52}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MttPersistenceIntegrationTests", "MttPersistenceIntegrationTests\MttPersistenceIntegrationTests.csproj", "{9D51E3BD-B43A-4FD3-BD19-7DC0C2998EDC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MttInfra", "MttInfra\MttInfra.csproj", "{C55ED997-3340-4FC2-AE29-DBE94D04EA46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MttLambda", "MttLambda\src\MttLambda\MttLambda.csproj", "{C5C89D94-DAB2-42E3-B108-9B09E514C185}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MttLambda.Tests", "MttLambda\test\MttLambda.Tests\MttLambda.Tests.csproj", "{91142847-1D97-4FE7-B5A3-578B53E38E7C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,13 +32,21 @@ Global
 		{B979F078-7FF9-4724-AAAD-7C7322C0DB75}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B979F078-7FF9-4724-AAAD-7C7322C0DB75}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B979F078-7FF9-4724-AAAD-7C7322C0DB75}.Release|Any CPU.Build.0 = Release|Any CPU
-		{12CB9BE1-5B44-496C-95C4-9D5EB5E6AF52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{12CB9BE1-5B44-496C-95C4-9D5EB5E6AF52}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{12CB9BE1-5B44-496C-95C4-9D5EB5E6AF52}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{12CB9BE1-5B44-496C-95C4-9D5EB5E6AF52}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9D51E3BD-B43A-4FD3-BD19-7DC0C2998EDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9D51E3BD-B43A-4FD3-BD19-7DC0C2998EDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D51E3BD-B43A-4FD3-BD19-7DC0C2998EDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D51E3BD-B43A-4FD3-BD19-7DC0C2998EDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C55ED997-3340-4FC2-AE29-DBE94D04EA46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C55ED997-3340-4FC2-AE29-DBE94D04EA46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C55ED997-3340-4FC2-AE29-DBE94D04EA46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C55ED997-3340-4FC2-AE29-DBE94D04EA46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5C89D94-DAB2-42E3-B108-9B09E514C185}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5C89D94-DAB2-42E3-B108-9B09E514C185}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5C89D94-DAB2-42E3-B108-9B09E514C185}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5C89D94-DAB2-42E3-B108-9B09E514C185}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91142847-1D97-4FE7-B5A3-578B53E38E7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91142847-1D97-4FE7-B5A3-578B53E38E7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91142847-1D97-4FE7-B5A3-578B53E38E7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91142847-1D97-4FE7-B5A3-578B53E38E7C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

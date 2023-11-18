@@ -398,3 +398,10 @@ FodyWeavers.xsd
 *.sln.iml
 
 **/.idea/**
+
+
+# aws sam
+**/.aws-sam/**
+
+# asw cdk
+**/cdk.out/**
