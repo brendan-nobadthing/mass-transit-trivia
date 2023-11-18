@@ -3,5 +3,5 @@ Code sample build to support a December 2023 conference talk: "Event Orchestrati
 
 
 # Trivia Game
-A trivia game has been chosen as a non-trivial use case to present async event orchestration
+A trivia game has been chosen as a non-trivial use case to present async event orchestration.
  
