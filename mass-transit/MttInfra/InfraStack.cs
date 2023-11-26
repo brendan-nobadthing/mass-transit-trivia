@@ -1,14 +1,17 @@
 using Amazon.CDK;
 using Amazon.CDK.AWS.APIGateway;
+using Amazon.CDK.AWS.AppSync;
 using Amazon.CDK.AWS.EC2;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
 using Amazon.CDK.AWS.Lambda.EventSources;
 using Amazon.CDK.AWS.Logs;
 using Amazon.CDK.AWS.RDS;
+using Amazon.CDK.AWS.SecretsManager;
 using Amazon.CDK.AWS.SNS;
 using Amazon.CDK.AWS.SQS;
 using Constructs;
+using Code = Amazon.CDK.AWS.Lambda.Code;
 using InstanceType = Amazon.CDK.AWS.RDS.InstanceType;
 
 namespace MttInfra;
@@ -70,7 +73,7 @@ public class InfraStack: Stack
         new CfnOutput(this, "apigwtarn", new CfnOutputProps { Value = restAPI.ArnForExecuteApi() });
         
         
-        // Database for saga persistence
+       
         var dbVpc = new Vpc(this, "vpc-postgres", new VpcProps
         {
             Cidr = "10.0.0.0/16",
@@ -91,7 +94,20 @@ public class InfraStack: Stack
                 }
             }
         });
-        var db = new DatabaseInstance(this, "DB", new DatabaseInstanceProps
+        
+        
+        // create secret for db credentials
+        var dbSecret = new Secret(this, "brendan-trivia-db-secret", new SecretProps()
+        {
+            GenerateSecretString = new SecretStringGenerator()
+            {
+                SecretStringTemplate = @"{ ""username"": ""postgres"" }",
+                GenerateStringKey = "password",
+                IncludeSpace = false
+            }
+        });
+        
+        var db = new DatabaseInstance(this, "brendan-trivia-db", new DatabaseInstanceProps
         {
             Vpc = dbVpc,
             VpcSubnets = new SubnetSelection{ SubnetType = SubnetType.PRIVATE_WITH_EGRESS },
@@ -99,7 +115,8 @@ public class InfraStack: Stack
             InstanceType = Amazon.CDK.AWS.EC2.InstanceType.Of(InstanceClass.T3, InstanceSize.MICRO),
             Port = 5432,
             InstanceIdentifier = "brendan-trivia-db",
-            BackupRetention = Duration.Seconds(0) //not a good idea in prod, for this sample code it's ok
+            BackupRetention = Duration.Seconds(0), //not a good idea in prod, for this sample code it's ok
+            Credentials = Credentials.FromSecret(dbSecret)
         });
 
         var dbSecurityGroup = new SecurityGroup(this, "db-security-group", new SecurityGroupProps()

@@ -14,9 +14,7 @@ public class SqsTests
     [Fact]
     public async Task QueueShouldExist()
     {
-        //var ssoCreds = LoadSsoCredentials("digio-sandbox");
-        var ssoCreds = new BasicAWSCredentials("AKIA4SMWSAH6KVF7EFXY", 
-            "6GzH/h/vAr8rxv3fbj02AwmGYrN4e6tsRtfVTns1");
+        var ssoCreds = LoadSsoCredentials("digio-sandbox");
         var ssoProfileClient = new AmazonSecurityTokenServiceClient(ssoCreds);
 
         var sqsClient = new AmazonSQSClient(ssoCreds, RegionEndpoint.APSoutheast2);
