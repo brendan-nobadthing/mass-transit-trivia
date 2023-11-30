@@ -31,7 +31,6 @@ public class GameController
             CorrelationId = id,
             CreatedAt = DateTime.UtcNow
         });
-
         return id;
     }
     

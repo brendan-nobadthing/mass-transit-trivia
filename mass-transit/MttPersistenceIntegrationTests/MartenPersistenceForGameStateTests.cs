@@ -10,10 +10,10 @@ using Testcontainers.PostgreSql;
 
 namespace MttPersistenceIntegrationTests;
 
+
 public class MartenPersistenceForGameStateTests: IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder().Build();
-
     public Task InitializeAsync()
     {
         return _postgreSqlContainer.StartAsync();
@@ -27,16 +27,17 @@ public class MartenPersistenceForGameStateTests: IAsyncLifetime
     [Fact]
     public async Task ShouldPersistGameState()
     {
-        
         var services =  new ServiceCollection()
             .AddHttpClient();
-            
             services.AddMarten(opt => opt.Connection(_postgreSqlContainer.GetConnectionString()));
             services.AddMassTransit(x =>
             {
-                x.SetKebabCaseEndpointNameFormatter();
-                
                 x.SetMartenSagaRepositoryProvider();
+                x.AddSagaRepository<GameState>()
+                    .MartenRepository();
+                
+                
+                x.SetKebabCaseEndpointNameFormatter();
 
                 var mtAssembly = (typeof(CreateGame).Assembly);
 
@@ -45,9 +46,6 @@ public class MartenPersistenceForGameStateTests: IAsyncLifetime
                 x.AddSagas(mtAssembly);
                 x.AddActivities(mtAssembly);
                 
-                x.AddSagaRepository<GameState>()
-                    .MartenRepository();
-
                 x.UsingInMemory((context, cfg) =>
                 {
                     cfg.ConfigureEndpoints(context);
@@ -63,19 +61,13 @@ public class MartenPersistenceForGameStateTests: IAsyncLifetime
             await busControl.StopAsync();
             
             // assert record created
-            using (DbConnection connection = new NpgsqlConnection(_postgreSqlContainer.GetConnectionString()))
-            {
-                using (DbCommand command = new NpgsqlCommand())
-                {
-                    connection.Open();
-                    command.Connection = connection;
-                    command.CommandText = "SELECT COUNT(id) from mt_doc_gamestate";
+            await using DbConnection connection = new NpgsqlConnection(_postgreSqlContainer.GetConnectionString());
+            await using DbCommand command = new NpgsqlCommand();
+            await connection.OpenAsync();
+            command.Connection = connection;
+            command.CommandText = "SELECT COUNT(id) from mt_doc_gamestate";
 
-                    var count = await command.ExecuteScalarAsync();
-                    count.ShouldBe(1);
-                }
-            }
-            
-        
+            var count = await command.ExecuteScalarAsync();
+            count.ShouldBe(1);
     }
 }

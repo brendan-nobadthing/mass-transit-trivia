@@ -18,19 +18,15 @@ public class InMemoryTests
             .AddHttpClient()
             .AddMassTransit(x =>
             {
-                x.SetKebabCaseEndpointNameFormatter();
-
-                // By default, sagas are in-memory, but should be changed to a durable
-                // saga repository.
-                x.SetInMemorySagaRepositoryProvider();
-
                 var mtAssembly = (typeof(CreateGame).Assembly);
-
                 x.AddConsumers(mtAssembly);
                 x.AddSagaStateMachines(mtAssembly);
                 x.AddSagas(mtAssembly);
                 x.AddActivities(mtAssembly);
-
+                
+                x.SetKebabCaseEndpointNameFormatter();
+                
+                x.SetInMemorySagaRepositoryProvider();
                 x.UsingInMemory((context, cfg) =>
                 {
                     cfg.ConfigureEndpoints(context);

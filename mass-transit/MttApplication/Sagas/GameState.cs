@@ -13,8 +13,6 @@ public class GameState: SagaStateMachineInstance
     public IList<Question> Questions { get; set; } = new List<Question>();
     public IList<QuestionResponse> Responses { get; set; } = new List<QuestionResponse>();
     public IList<QuestionResponseScore> Scores { get; set; } = new List<QuestionResponseScore>();
-
-    
     
     public int AnswerTimeSeconds { get; set; } = 10;
     public int ShowResultTimeSeconds { get; set; } = 5;
@@ -159,7 +157,6 @@ public class GameStateMachine : MassTransitStateMachine<GameState>
     public Event<AddParticipant> AddParticipant { get; set; }
     public Event<StartGame> StartGame { get; set; }
     public Request<GameState, FetchQuestions, QuestionsFetched> FetchQuestionsRequest { get; private set; }
-    
     public Schedule<GameState,CloseCurrentQuestion> CloseCurrentQuestionScheduler { get; set; }
     public Event<CloseCurrentQuestion> CloseCurrentQuestion { get; set; }
     public Event<AnswerQuestion> AnswerQuestion { get; set; }

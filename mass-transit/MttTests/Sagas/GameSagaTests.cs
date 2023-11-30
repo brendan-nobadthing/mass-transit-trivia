@@ -25,7 +25,8 @@ public class GameSagaTests
 
         // assert
         var instance =
-            sagaHarness.Sagas.ContainsInState(sagaId, sagaHarness.StateMachine, sagaHarness.StateMachine.LobbyOpen);
+            sagaHarness.Sagas.ContainsInState(sagaId, sagaHarness.StateMachine, 
+                sagaHarness.StateMachine.LobbyOpen);
 
         instance.ShouldNotBeNull();
         instance.CurrentState.ShouldBe("LobbyOpen");
@@ -172,6 +173,7 @@ public class GameSagaTests
         });
         await harness.Consumed.Any<AnswerQuestion>();
         
+        // assert
         var instance =
             sagaHarness.Sagas.ContainsInState(sagaId, sagaHarness.StateMachine, sagaHarness.StateMachine.QuestionOpen);
         instance.ShouldNotBeNull();
