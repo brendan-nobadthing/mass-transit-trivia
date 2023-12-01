@@ -9,10 +9,8 @@ namespace MttApi.Controllers;
 [Route("[controller]")]
 public class GameController
 {
-
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly ILogger<GameController> _log;
-
     public GameController(IPublishEndpoint publishEndpoint, ILogger<GameController> log)
     {
         _publishEndpoint = publishEndpoint;

@@ -1,6 +1,6 @@
+using System.Diagnostics;
 using Amazon.CDK;
 using Amazon.CDK.AWS.APIGateway;
-using Amazon.CDK.AWS.AppSync;
 using Amazon.CDK.AWS.EC2;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
@@ -8,11 +8,9 @@ using Amazon.CDK.AWS.Lambda.EventSources;
 using Amazon.CDK.AWS.Logs;
 using Amazon.CDK.AWS.RDS;
 using Amazon.CDK.AWS.SecretsManager;
-using Amazon.CDK.AWS.SNS;
 using Amazon.CDK.AWS.SQS;
 using Constructs;
 using Code = Amazon.CDK.AWS.Lambda.Code;
-using InstanceType = Amazon.CDK.AWS.RDS.InstanceType;
 
 namespace MttInfra;
 
@@ -20,8 +18,6 @@ public class InfraStack: Stack
 {
     internal InfraStack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
     {
-        
-        
         var apiLambda = new Function(this, "MttApiLambda", new FunctionProps
         {
             Runtime = Runtime.DOTNET_6,
@@ -63,13 +59,12 @@ public class InfraStack: Stack
             Resources = new []{ $"arn:aws:sns:{this.Region}:{this.Account}:*" }
         }));
         
-        //Proxy all request from the root path "/" to Lambda Function One
+        //Proxy all request from the root path "/" to Lambda 
         var restAPI = new LambdaRestApi(this, "Endpoint", new LambdaRestApiProps
         {
             Handler = apiLambda,
             Proxy = true,
         });
-        
         new CfnOutput(this, "apigwtarn", new CfnOutputProps { Value = restAPI.ArnForExecuteApi() });
         
         
@@ -103,20 +98,23 @@ public class InfraStack: Stack
             {
                 SecretStringTemplate = @"{ ""username"": ""postgres"" }",
                 GenerateStringKey = "password",
-                IncludeSpace = false
-            }
+                IncludeSpace = false,
+                ExcludePunctuation = true
+            },
+            SecretName = "brendan-trivia-db-secret"
         });
         
         var db = new DatabaseInstance(this, "brendan-trivia-db", new DatabaseInstanceProps
         {
             Vpc = dbVpc,
-            VpcSubnets = new SubnetSelection{ SubnetType = SubnetType.PRIVATE_WITH_EGRESS },
+            VpcSubnets = new SubnetSelection{ SubnetType = SubnetType.PUBLIC },
             Engine = DatabaseInstanceEngine.Postgres(new PostgresInstanceEngineProps(){ Version = PostgresEngineVersion.VER_15 }),
             InstanceType = Amazon.CDK.AWS.EC2.InstanceType.Of(InstanceClass.T3, InstanceSize.MICRO),
             Port = 5432,
             InstanceIdentifier = "brendan-trivia-db",
             BackupRetention = Duration.Seconds(0), //not a good idea in prod, for this sample code it's ok
-            Credentials = Credentials.FromSecret(dbSecret)
+            Credentials = Credentials.FromSecret(dbSecret),
+            PubliclyAccessible = true
         });
 
         var dbSecurityGroup = new SecurityGroup(this, "db-security-group", new SecurityGroupProps()
@@ -128,7 +126,6 @@ public class InfraStack: Stack
         var gameStateQueue =
             Queue.FromQueueArn(this, "game-state", $"arn:aws:sqs:{this.Region}:{this.Account}:game-state");
         
-
         var backendLambda = new Function(this, "MttBackendLambda", new FunctionProps
         {
             Runtime = Runtime.DOTNET_6,
@@ -156,6 +153,26 @@ public class InfraStack: Stack
             }),
         });
         backendLambda.AddEventSource(new SqsEventSource(gameStateQueue));
+        // publish to sns topics prefixed with brendan-trivia 
+        backendLambda.Role?.AddToPrincipalPolicy(new PolicyStatement(new PolicyStatementProps()
+        {
+            Effect = Effect.ALLOW,
+            Actions = new []{ "sns:Publish" },
+            Resources = new []{ $"arn:aws:sns:{this.Region}:{this.Account}:brendan-trivia*" }
+        }));
+        // list all topics under account
+        backendLambda.Role?.AddToPrincipalPolicy(new PolicyStatement(new PolicyStatementProps()
+        {
+            Effect = Effect.ALLOW,
+            Actions = new []{ "sns:ListTopics" },
+            Resources = new []{ $"arn:aws:sns:{this.Region}:{this.Account}:*" }
+        }));
+        backendLambda.Role?.AddToPrincipalPolicy(new PolicyStatement(new PolicyStatementProps()
+        {
+            Effect = Effect.ALLOW,
+            Actions = new[] {"secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"},
+            Resources = new []{$"arn:aws:secretsmanager:{this.Region}:{this.Account}:secret:brendan-trivia*", $"arn:aws:secretsmanager:{this.Region}:{this.Account}:secret:application-secrets*"}
+        }));
         // var backendApi = restAPI.Root.AddResource("backend", new ResourceOptions()
         // {
         //     DefaultIntegration = new LambdaIntegration(backendLambda)

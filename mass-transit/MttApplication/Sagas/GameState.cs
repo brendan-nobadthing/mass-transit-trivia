@@ -33,6 +33,7 @@ public class GameStateMachine : MassTransitStateMachine<GameState>
         Schedule(() => NextQuestionScheduler, x => x.NextQuestionSchedulerTokenId);
         
         Initially(When(CreateGame)
+            .Then(x => Console.WriteLine("GameStateMachine CreateGame"))
             .TransitionTo(LobbyOpen));
         
         During(LobbyOpen,

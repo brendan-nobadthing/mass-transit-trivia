@@ -21,7 +21,6 @@ namespace MttDeployTopology
     
                 Console.WriteLine("Deploy Topology...");
                 await busControl.DeployAsync(source.Token);
-
                 Console.WriteLine("Topology Deployed");
             }
             catch (Exception ex)
@@ -51,14 +50,10 @@ namespace MttDeployTopology
                         x.AddConsumers(mtAssembly);
                         x.AddSagaStateMachines(mtAssembly);
                         x.AddActivities(mtAssembly);
-
-                        //x.AddSagaRepository<GameState>()
-                        //.MartenRepository();
-                        //x.UsingInMemory((context, cfg) => { cfg.ConfigureEndpoints(context); });
+                        
                         x.SetInMemorySagaRepositoryProvider();
                         x.UsingAmazonSqs((context, cfg) =>
                         {
-                            
                             cfg.Host("ap-southeast-2", h =>
                             {
                                 h.AccessKey(config["user-access-key"]);
