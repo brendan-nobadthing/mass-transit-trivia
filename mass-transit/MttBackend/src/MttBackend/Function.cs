@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -44,11 +45,14 @@ public class Function
         services.AddHttpClient();
         services.AddMarten(opt => opt.Connection(
                 $"Server={dbHost};Port={dbPort};Database=postgres;User Id={dbUsername};Password={dbPassword};"));
+        Console.WriteLine($"Server={dbHost};Port={dbPort};Database=postgres;User Id={dbUsername};Password={dbPassword};");
         services.AddSingleton<AwsSecrets>();
         services.AddMassTransit(x =>
         {
-            x.SetKebabCaseEndpointNameFormatter();
+            x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("brendan-trivia", false));
+           
             x.SetMartenSagaRepositoryProvider();
+            x.AddSagaRepository<GameState>().MartenRepository();
             
             var mtAssembly = (typeof(CreateGame).Assembly);
             x.AddConsumers(mtAssembly);
@@ -56,12 +60,9 @@ public class Function
             x.AddSagas(mtAssembly);
             x.AddActivities(mtAssembly);
             
-            x.AddSagaRepository<GameState>().MartenRepository();
-            
             x.UsingInMemory((context, cfg) =>
             {
                 cfg.ConfigureEndpoints(context);
-                cfg.UseRawJsonSerializer();
             });
             // x.UsingAmazonSqs((context, cfg) =>
             // {
@@ -69,6 +70,7 @@ public class Function
             //     {
             //         h.AccessKey(userAccessKey);
             //         h.SecretKey(userSecret);
+            //         h.EnableScopedTopics();
             //         h.Scope("brendan-trivia", true);
             //     });
             //     cfg.ConfigureEndpoints(context);
@@ -79,74 +81,30 @@ public class Function
 
     public async Task SQSHandler(SQSEvent evnt, ILambdaContext context)
     {
-        using var cts = new CancellationTokenSource(context.RemainingTime);
-        var serviceProvider = await _buildServiceProviderTask;
-        using var scope = serviceProvider.CreateScope();
-        
-        var busControl = scope.ServiceProvider.GetRequiredService<IBusControl>();
-        await busControl.StartAsync(cts.Token);
-        
-        // WORK IN PROGRESS - the below is not quite right yet
-        
-        var dispatcher = scope.ServiceProvider.GetRequiredService<IReceiveEndpointDispatcher<GameStateMachine>>();
-
         try
         {
-            var receiver = scope.ServiceProvider.GetRequiredService<IMessageReceiver<GameStateMachine>>();
-        }
-        catch (Exception ex)
+            using var cts = new CancellationTokenSource(context.RemainingTime);
+            var serviceProvider = await _buildServiceProviderTask;
+            using var scope = serviceProvider.CreateScope();
+            // var busControl = scope.ServiceProvider.GetRequiredService<IBusControl>();
+            // await busControl.StartAsync(cts.Token);
+        
+            var dispatcher = scope.ServiceProvider.GetRequiredService<IReceiveEndpointDispatcher<GameState>>();
+        
+            await Console.Out.WriteLineAsync($"processing {evnt.Records.Count} records");
+            foreach (var record in evnt.Records)
+            {
+                await Console.Out.WriteLineAsync("SQS Handler Got Message: "+record.Body);
+                var sqsMessageJson = JsonNode.Parse(record.Body);
+                var mtMessage = sqsMessageJson!["Message"]!.GetValue<string>();
+                await Console.Out.WriteLineAsync("Got inner message: "+mtMessage);
+                await dispatcher.Dispatch(Encoding.UTF8.GetBytes(mtMessage), new Dictionary<string, object>(), cts.Token);
+                
+            } 
+        } catch (Exception e)
         {
-            Console.WriteLine("Failed to get receiver");
+            await Console.Out.WriteLineAsync("SQSHandler Exception: "+e.Message);
         }
-        
-        
-        Console.Out.WriteLine($"processing {evnt.Records.Count} records");
-        foreach (var message in evnt.Records)
-        {
-           Console.Out.WriteLine("SQS Handler Got Message: "+message.Body);
-
-           var bus = scope.ServiceProvider.GetRequiredService<IBus>();
-
-           await bus.Publish(new CreateGame()
-           {
-               CorrelationId = Guid.NewGuid(),
-               Name = "TEST-" + Guid.NewGuid().ToString(),
-               CreatedAt = DateTime.UtcNow
-           });
-
-           // try
-           // {
-           //     var headers = new Dictionary<string, object>();
-           //     foreach (var key in message!.Attributes!.Keys)
-           //         headers[key] = message.Attributes[key];
-           //     foreach (var key in message!.MessageAttributes!.Keys)
-           //         headers[key] = message.MessageAttributes[key];
-           //     var body = Encoding.UTF8.GetBytes(message.Body);
-           //     
-           //     await dispatcher.Dispatch(body, headers, cts.Token);
-           //     dispatcher.Dispatch()
-           // }
-           // catch (Exception dispatchError)
-           // {
-           //     Console.Out.WriteLine("dispatch Error: "+dispatchError.Message);
-           // }
-
-           // try
-           // {
-           //     var createGame = JsonSerializer.Deserialize<CreateGame>(jObj["message"]);
-           //     await receiver.Deliver(createGame, cts.Token);
-           // }
-           // catch (Exception deliverException)
-           // {
-           //     Console.Out.WriteLine("deliver Error: "+deliverException.Message);
-           // }
-
-
-        }
-        //await busControl.StopAsync();
-        
     }
     
-  
-
 }

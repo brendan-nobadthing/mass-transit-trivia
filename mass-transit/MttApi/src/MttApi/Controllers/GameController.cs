@@ -34,7 +34,9 @@ public class GameController
     
     
     [HttpGet("hello")]
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public async Task<ActionResult<string>> Hello()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
         return new OkObjectResult("Hello");
     }

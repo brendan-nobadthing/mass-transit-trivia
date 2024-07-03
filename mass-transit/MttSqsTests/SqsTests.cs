@@ -19,7 +19,7 @@ public class SqsTests
 
         var sqsClient = new AmazonSQSClient(ssoCreds, RegionEndpoint.APSoutheast2);
 
-        var listQueuesResponse = await sqsClient.ListQueuesAsync("brendan-trivia-stack");
+        var listQueuesResponse = await sqsClient.ListQueuesAsync("game-state");
         listQueuesResponse.QueueUrls.ShouldNotBeEmpty();
     }
     

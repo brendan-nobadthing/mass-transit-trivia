@@ -103,36 +103,39 @@ public class InfraStack: Stack
             },
             SecretName = "brendan-trivia-db-secret"
         });
-        
+       
+        var dbSecurityGroup = new SecurityGroup(this, "db-security-group", new SecurityGroupProps()
+        {
+            Vpc = dbVpc,
+        });
         var db = new DatabaseInstance(this, "brendan-trivia-db", new DatabaseInstanceProps
         {
             Vpc = dbVpc,
-            VpcSubnets = new SubnetSelection{ SubnetType = SubnetType.PUBLIC },
+            VpcSubnets = new SubnetSelection{ SubnetType = SubnetType.PRIVATE_WITH_EGRESS },
             Engine = DatabaseInstanceEngine.Postgres(new PostgresInstanceEngineProps(){ Version = PostgresEngineVersion.VER_15 }),
             InstanceType = Amazon.CDK.AWS.EC2.InstanceType.Of(InstanceClass.T3, InstanceSize.MICRO),
             Port = 5432,
             InstanceIdentifier = "brendan-trivia-db",
             BackupRetention = Duration.Seconds(0), //not a good idea in prod, for this sample code it's ok
             Credentials = Credentials.FromSecret(dbSecret),
-            PubliclyAccessible = true
+            SecurityGroups = new ISecurityGroup[]{dbSecurityGroup}
         });
 
-        var dbSecurityGroup = new SecurityGroup(this, "db-security-group", new SecurityGroupProps()
-        {
-            Vpc = dbVpc,
-        });
+       
         dbSecurityGroup.Connections.AllowFrom(Peer.AnyIpv4(), Port.Tcp(5432), "Postgres");
 
         var gameStateQueue =
-            Queue.FromQueueArn(this, "game-state", $"arn:aws:sqs:{this.Region}:{this.Account}:game-state");
+            Queue.FromQueueArn(this, "brendan-trivia-game-state", $"arn:aws:sqs:{this.Region}:{this.Account}:brendan-trivia-game-state");
         
         var backendLambda = new Function(this, "MttBackendLambda", new FunctionProps
         {
             Runtime = Runtime.DOTNET_6,
             MemorySize = 1024,
             LogRetention = RetentionDays.ONE_DAY,
+            Timeout = Duration.Seconds(29),
             Handler = "MttBackend::MttBackend.Function::SQSHandler",
             Vpc = dbVpc,
+            SecurityGroups = new ISecurityGroup[]{dbSecurityGroup},
             Code = Code.FromAsset("../", new Amazon.CDK.AWS.S3.Assets.AssetOptions // parent path to include MttApi's dependencies. Use with workingdirectory bundling value
             {
                 Bundling = new BundlingOptions()
@@ -173,14 +176,17 @@ public class InfraStack: Stack
             Actions = new[] {"secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"},
             Resources = new []{$"arn:aws:secretsmanager:{this.Region}:{this.Account}:secret:brendan-trivia*", $"arn:aws:secretsmanager:{this.Region}:{this.Account}:secret:application-secrets*"}
         }));
+        
+        // allow backenbdLambda -> dbSecurityGroup
+        dbSecurityGroup.Connections.AllowFrom(backendLambda.Connections, Port.Tcp(5432), "Allow backendLambda to connect to Postgres");
+        
         // var backendApi = restAPI.Root.AddResource("backend", new ResourceOptions()
         // {
         //     DefaultIntegration = new LambdaIntegration(backendLambda)
         // });
         // backendApi.AddMethod("ANY");
         // backendApi.AddProxy();
-
-
+        
 
     }
 }

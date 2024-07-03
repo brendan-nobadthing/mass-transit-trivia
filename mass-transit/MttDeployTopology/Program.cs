@@ -42,7 +42,7 @@ namespace MttDeployTopology
                 {
                     services.AddMassTransit(x =>
                     {
-                        x.SetKebabCaseEndpointNameFormatter();
+                        x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("brendan-trivia", false));
                         //x.SetMartenSagaRepositoryProvider();
 
                         var mtAssembly = (typeof(CreateGame).Assembly);
@@ -58,8 +58,8 @@ namespace MttDeployTopology
                             {
                                 h.AccessKey(config["user-access-key"]);
                                 h.SecretKey(config["user-secret"]);
-                                h.Scope("brendan-trivia", true);
                                 h.EnableScopedTopics();
+                                h.Scope("brendan-trivia", true);
                             });
                             cfg.DeployTopologyOnly = true;
                             cfg.ConfigureEndpoints(context);
